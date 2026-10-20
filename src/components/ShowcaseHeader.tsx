@@ -30,9 +30,6 @@ export const ShowcaseHeader: React.FC<ShowcaseHeaderProps> = ({
                 v2.5.5 Interactive Demo
               </span>
             </div>
-            <p className="text-xs text-slate-400 hidden sm:block">
-              Interfaz 100% real • Audio dual (WASAPI Loopback + Mic), IA y reportes Word (.docx)
-            </p>
           </div>
         </div>
 
