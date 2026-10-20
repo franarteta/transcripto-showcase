@@ -4,6 +4,7 @@ import { ShowcaseHeader } from './components/ShowcaseHeader'
 import RealApp from './RealApp'
 import RealAppLite from './RealAppLite'
 import { FeedbackModal } from './components/FeedbackModal'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 // Inicializar el puente mock de PyWebView para el navegador
 setupMockBridge()
@@ -23,11 +24,13 @@ export const App: React.FC = () => {
 
       {/* Contenedor principal donde se monta la app real */}
       <div className="flex-1 w-full min-h-0 overflow-hidden relative">
-        {currentMode === 'desktop' ? (
-          <RealApp key="real-desktop-app" />
-        ) : (
-          <RealAppLite key="real-lite-app" />
-        )}
+        <ErrorBoundary>
+          {currentMode === 'desktop' ? (
+            <RealApp key="real-desktop-app" />
+          ) : (
+            <RealAppLite key="real-lite-app" />
+          )}
+        </ErrorBoundary>
       </div>
 
       {/* Modal de Feedback directo a franarteta23@gmail.com */}

@@ -85,7 +85,20 @@ function App(){
   const dragCounterRef=useRef(0)
   const autoUpdateChecked=useRef(false)
 
-  const notify=(message:string)=>{setToast(message); window.setTimeout(()=>setToast(''),4200)}
+  const notify = (message: any) => {
+    const text = typeof message === 'string' ? message : (message?.message || message?.error || 'Operación realizada con éxito')
+    setToast(text)
+    window.setTimeout(() => setToast(''), 4200)
+  }
+
+  const safeSetResult = (data: any) => {
+    if (!data) {
+      setResult(null)
+      return
+    }
+    const item = Array.isArray(data) ? data[0] : data
+    setResult(item)
+  }
 
   const processDroppedFile=async(dropped:File)=>{
     setIsWindowDragging(false)
@@ -312,8 +325,8 @@ function App(){
       }
       if(event.kind==='live_warning'){notify(event.message || '')}
       if(event.kind==='live_cancelled'){setRecording(false);setLivePaused(false);setLiveStopping(false);setBusy(false);setLiveLevel(0);setLiveMicLevel(0);setLiveDesktopLevel(0);setLiveInterimMic('');setLiveInterimDesktop('');setLiveConnectionStatus('connected');setLiveConnectionMessage('');setStatus('Lista para grabar');if(event.message)notify(event.message)}
-      if(event.kind==='live_complete'){setRecording(false);setLivePaused(false);setLiveStopping(false);setBusy(false);setProgress(0);setLiveLevel(0);setLiveMicLevel(0);setLiveDesktopLevel(0);setLiveInterimMic('');setLiveInterimDesktop('');setLiveConnectionStatus('connected');setLiveConnectionMessage('');setStatus('Listo');setResult(event.result);setPage('results');if(event.warning)notify(event.warning);refresh()}
-      if(event.kind==='result'){setBusy(false);setProgress(0);setResult(event.result);setPage('results');refresh()}
+      if(event.kind==='live_complete'){setRecording(false);setLivePaused(false);setLiveStopping(false);setBusy(false);setProgress(0);setLiveLevel(0);setLiveMicLevel(0);setLiveDesktopLevel(0);setLiveInterimMic('');setLiveInterimDesktop('');setLiveConnectionStatus('connected');setLiveConnectionMessage('');setStatus('Listo');safeSetResult(event.result);setPage('results');if(event.warning)notify(event.warning);refresh()}
+      if(event.kind==='result'){setBusy(false);setProgress(0);safeSetResult(event.result);setPage('results');refresh()}
       if(event.kind==='error'){
         setBusy(false)
         const wasRecording = recording
@@ -356,7 +369,7 @@ function App(){
     <main className="workspace">
       <header className="titlebar"><span className="window-title">transcripto</span><span className="status-pill"><i/>{bridgeError||(recording?(liveConnectionStatus==='reconnecting'?'Reconectando Gemini Live…':livePaused?'Pausado':status.startsWith('Analizando')?'Escuchando y transcribiendo en vivo…':status):status)}</span></header>
       {bridgeError&&<div className="notice warning" style={{margin:'14px 32px 0'}}>{bridgeError}</div>}
-      {page==='home'&&<HomePage go={setPage} boot={boot} openHistory={async id=>{const r=await call('load_history',id);setResult(r);setPage('results')}}/>}
+      {page==='home'&&<HomePage go={setPage} boot={boot} openHistory={async id=>{const r=await call('load_history',id);safeSetResult(r);setPage('results')}}/>}
       {page==='live'&&<LivePage boot={boot} segments={liveSegments} interimMic={liveInterimMic} interimDesktop={liveInterimDesktop} level={liveLevel} micLevel={liveMicLevel} desktopLevel={liveDesktopLevel} recording={recording} paused={livePaused} busy={busy} stopping={liveStopping} liveConnectionStatus={liveConnectionStatus} liveConnectionMessage={liveConnectionMessage} onRefreshSources={async()=>{try{const data=await call('refresh_sources');setBoot(data);notify('Fuentes de audio actualizadas')}catch(e:any){notify(e.message||'No se pudieron actualizar las fuentes')}}} onStart={async cfg=>{setLiveSegments([]);setLiveInterimMic('');setLiveInterimDesktop('');setBusy(true);setRecording(false);setLivePaused(false);setLiveStopping(false);setLiveLevel(0);setLiveMicLevel(0);setLiveDesktopLevel(0);setStatus(cfg.engine==='gemini_live'?'Conectando con Gemini Live…':'Cargando el modelo local…');try{await call('start_live',cfg)}catch(e:any){setBusy(false);setRecording(false);setStatus('Lista para grabar');notify(e.message)}}} onStop={async()=>{setLiveStopping(true);setLivePaused(false);setStatus(recording?'Deteniendo y guardando la grabación…':'Cancelando la carga del modelo…');try{await call('stop_live')}catch(e:any){setLiveStopping(false);notify(e.message)}}} onPause={async()=>{if(livePaused){await call('resume_live');setLivePaused(false)}else{await call('pause_live');setLivePaused(true)}}}/>} 
       {page==='import'&&<ImportPage
         boot={boot}
@@ -370,8 +383,8 @@ function App(){
         onRun={async cfg=>{setBusy(true);setProgress(.02);try{await call('transcribe_file',cfg)}catch(e:any){setBusy(false);notify(e.message)}}}
         onRunUrl={async cfg=>{setBusy(true);setProgress(.01);setStatus('Conectando al enlace web…');try{await call('transcribe_url',cfg);notify('Descargando y transcribiendo enlace web…')}catch(e:any){setBusy(false);notify(e.message||'Error al transcribir enlace')}}}
       />} 
-      {page==='history'&&<HistoryPage items={boot.history} reload={refresh} open={async id=>{const r=await call('load_history',id);setResult(r);setPage('results')}}/>}
-      {page==='results'&&<ResultsPage result={result} onOpenHistory={()=>setPage('history')} onExport={async()=>notify(await call('export_current'))} notify={notify} onUpdateResult={setResult}/>} 
+      {page==='history'&&<HistoryPage items={boot.history} reload={refresh} open={async id=>{const r=await call('load_history',id);safeSetResult(r);setPage('results')}}/>}
+      {page==='results'&&<ResultsPage result={result} onOpenHistory={()=>setPage('history')} onExport={async()=>notify(await call('export_current'))} notify={notify} onUpdateResult={safeSetResult}/>} 
       {page==='ai'&&<AiPage boot={boot} notify={notify} refresh={refresh}/>} 
       {page==='connections'&&<ConnectionsPage boot={boot} notify={notify} refresh={refresh}/>} 
       {page==='settings'&&<SettingsPage boot={boot} notify={notify} refresh={refresh} release={updateRelease} updateProgress={updateProgress} updateMessage={updateMessage} updatePath={updatePath} onRelease={setUpdateRelease} onDownload={async release=>{setUpdatePath('');setUpdateProgress(.01);setUpdateMessage('Preparando descarga…');await call('download_update',release)}}/>} 
@@ -1607,8 +1620,9 @@ function ResultsPage({
     </div>
   )
 
+  const segments = Array.isArray(result.segments) ? result.segments : []
   const hasVisual = Boolean(result.visual_timeline && result.visual_timeline.trim())
-  const distinctSpeakers = Array.from(new Set(result.segments.map(s => s.speaker).filter(Boolean) as string[]))
+  const distinctSpeakers = Array.from(new Set(segments.map(s => s.speaker).filter(Boolean) as string[]))
 
   const handleOpenSpeakerModal = (speaker: string, index: number | null) => {
     setActiveSpeaker(speaker || 'Micrófono')
@@ -1665,7 +1679,7 @@ function ResultsPage({
         <div className="result-pane">
           <div className="section-title"><Mic2 size={18} /><h2>Transcripción</h2></div>
           <div style={{ maxHeight: 520, overflowY: 'auto', paddingRight: 4 }}>
-            {result.segments.map((s, i) => (
+            {segments.map((s, i) => (
               <div className="line" key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
                 <time style={{ minWidth: 60, color: '#2563eb', fontFamily: 'monospace', fontWeight: 600, fontSize: 13, paddingTop: 2 }}>
                   [{formatTime(s.start)}]

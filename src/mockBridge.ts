@@ -623,17 +623,17 @@ export function setupMockBridge() {
       return { success: true }
     },
 
-    export_current: async (format: string) => {
+    export_current: async () => {
       triggerDownload('informe_muestra_transcripto.docx', './informe_muestra_transcripto.docx')
-      return { success: true, path: './informe_muestra_transcripto.docx' }
+      return 'Informe Word (.docx) descargado con éxito.'
     },
 
     get_session: async (sessionId: string) => {
       return getSampleSession()
     },
 
-    load_history: async () => {
-      return [getSampleSession()]
+    load_history: async (meetingId?: string) => {
+      return getSampleSession()
     },
 
     rename_speaker: async (meetingId: string, oldName: string, newName: string, segmentIndex?: number) => {
