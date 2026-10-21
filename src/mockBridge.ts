@@ -643,6 +643,31 @@ export function setupMockBridge() {
       return getSampleSession()
     },
 
+    edit_segment_text: async (arg1: any, arg2: any, arg3?: any) => {
+      const index = typeof arg1 === 'number' ? arg1 : Number(arg2 || 0)
+      const newText = typeof arg1 === 'number' ? String(arg2 || '') : String(arg3 || '')
+      const session = getSampleSession()
+      if (session.segments && session.segments[index]) {
+        session.segments[index].text = newText
+      }
+      return session
+    },
+
+    regenerate_docx: async () => {
+      return { status: 'ok', filename: 'reunion_sincronizacion_informe.docx', message: 'Documento Word (.docx) actualizado' }
+    },
+
+    export_format: async (arg1: string, arg2?: string) => {
+      const fmt = typeof arg1 === 'string' && !arg2 ? arg1 : (arg2 || 'docx')
+      return { status: 'ok', format: fmt, filename: `reunion_export.${fmt}`, message: `Archivo exportado: reunion_export.${fmt}` }
+    },
+
+    get_formatted_export: async (arg1: string, arg2?: string) => {
+      const fmt = typeof arg1 === 'string' && !arg2 ? arg1 : (arg2 || 'txt')
+      const session = getSampleSession()
+      return { format: fmt, content: session.transcript || '' }
+    },
+
     save_settings: async (settings: any) => {
       return { success: true }
     },
